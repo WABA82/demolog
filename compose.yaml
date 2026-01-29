@@ -5,18 +5,15 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      # MySQL 데이터 영속화
       - mysql_data:/var/lib/mysql
       # 초기 스키마/데이터 스크립트 자동 실행용 (선택)
       # - ./mysql-init:/docker-entrypoint-initdb.d
     environment:
-      # 최초 생성될 기본 데이터베이스
       MYSQL_DATABASE: local_db
       MYSQL_USER: app_user
       MYSQL_PASSWORD: app_user_password
       MYSQL_ROOT_PASSWORD: rootpassword
-      # 서버 기본 타임존 설정 (Spring/JPA 시간 이슈 예방)
-      TZ: Asia/Seoul
+      TZ: Asia/Seoul # 타임존 설정 (Spring/JPA 시간 이슈 예방)
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -27,5 +24,21 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: valkey/valkey:9.0.1-alpine
+    container_name: local-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
 volumes:
+  redis_data:
   mysql_data:
