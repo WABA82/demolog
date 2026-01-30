@@ -157,10 +157,10 @@ public class SecurityConfig {
                 "https://www.your-frontend-domain.com"
         ));
 
-        // 허용할 HTTP 메서드
+        // 클라이언트로 부터 허용할 HTTP 메서드
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        // 허용할 요청 헤더
+        // 클라이언트로 부터 허용할 요청 헤더
         config.setAllowedHeaders(Arrays.asList(
                 "Origin",
                 "Accept",
