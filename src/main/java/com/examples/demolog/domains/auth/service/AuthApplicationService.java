@@ -38,11 +38,16 @@ public class AuthApplicationService {
      */
     @Transactional
     public AppUserResponse signup(SignupRequest request) {
+        // 이메일 중복 검사
         if (appUserRepository.existsByEmail(request.email())) {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
-        AppUser saved = appUserRepository.save(request.toEntity());
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.password());
+
+        // 사용자 저장
+        AppUser saved = appUserRepository.save(request.toEntity(encodedPassword));
         return AppUserResponse.from(saved);
     }
 

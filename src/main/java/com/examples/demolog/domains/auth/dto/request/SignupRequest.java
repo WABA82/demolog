@@ -14,8 +14,8 @@ public record SignupRequest(
         String nickname
 ) {
 
-    public AppUser toEntity() {
-        return AppUser.create(email, password, nickname);
+    public AppUser toEntity(String encodedPassword) {
+        return AppUser.create(email, encodedPassword, nickname);
     }
 
 }
