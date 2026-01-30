@@ -74,7 +74,6 @@ public class ApiResponse<T> {
     public static <T> ResponseEntity<ApiResponse<T>> noContent() {
         ApiResponse<T> response = ApiResponse.<T>builder()
                 .success(true)
-                .code("no_content")
                 .message("요청이 성공적으로 처리되었습니다 (반환 데이터 없음).")
                 .build();
 
