@@ -50,6 +50,10 @@ com.example.app
 - 요청 검증(@Valid)
 - **Application Service만 호출**
 - 비즈니스 로직 ❌
+- **사용자 정보 필요 시 `@AuthenticationPrincipal` 우선 사용**
+  - Controller에서 사용자 정보를 주입받아 Application Service에 전달
+  - SecurityContextHolder 직접 사용 금지
+  - 예: `@AuthenticationPrincipal CustomUserDetails userDetails`
 
 ```java
 @RestController
@@ -61,9 +65,10 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
-            @Valid @RequestBody CreateProductRequest request
+            @Valid @RequestBody CreateProductRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails  // 사용자 정보 주입
     ) {
-        ProductResponse response = productApplicationService.createProduct(request);
+        ProductResponse response = productApplicationService.createProduct(request, userDetails.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
     }
@@ -84,6 +89,10 @@ public class ProductController {
 - 트랜잭션 경계 관리
 - 여러 Repository / Domain Service 조합
 - **다른 도메인의 Application Service 호출 ❌**
+- **사용자 정보 필요 시 매개변수로 수신**
+  - SecurityContextHolder 직접 사용 금지
+  - Controller에서 `@AuthenticationPrincipal`로 주입받은 사용자 정보를 매개변수로 전달받음
+  - 예: `public PostResponse createPost(CreatePostRequest request, UUID userId)`
 
 ```java
 @Service
@@ -420,14 +429,24 @@ public class GlobalExceptionHandler {
 
 | 계층 | 참조 가능 | 참조 금지 |
 | --- | --- | --- |
-| **Controller** | Application Service | Domain Service, Repository, Model |
-| **Application Service** | 자기/다른 도메인의 Repository, Domain Service | 다른 도메인의 Application Service |
+| **Controller** | Application Service | Domain Service, Repository, Model, SecurityContextHolder |
+| **Application Service** | 자기/다른 도메인의 Repository, Domain Service | 다른 도메인의 Application Service, SecurityContextHolder |
 | **Domain Service** | 자기 도메인의 Repository, Model | 다른 도메인의 Domain Service |
 | **Model** | Value Object, Enum | Repository, Service |
+
+### 의존성 흐름
+
 - Controller → Application Service
 - Application Service → Repository / Domain Service
 - Domain Service → Model
 - Model → 다른 계층 의존 ❌
+
+### 보안 관련 규칙
+
+- **Controller에서만 사용자 정보 수신**: `@AuthenticationPrincipal` 사용
+- **Application Service는 SecurityContextHolder 접근 금지**
+- **사용자 정보는 메서드 매개변수로 전달**: Controller → Service
+- **각 계층은 보안 컨텍스트에 독립적**: 테스트 용이성과 계층 분리 원칙 준수
 
 ---
 
