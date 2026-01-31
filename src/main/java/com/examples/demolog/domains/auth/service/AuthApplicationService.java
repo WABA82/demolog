@@ -8,7 +8,7 @@ import com.examples.demolog.domains.auth.exception.AuthException;
 import com.examples.demolog.domains.auth.model.AppUser;
 import com.examples.demolog.domains.auth.repository.AppUserRepository;
 import com.examples.demolog.global.security.CustomUserDetails;
-import com.examples.demolog.global.utils.CookieUtils;
+import com.examples.demolog.global.utils.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -94,7 +94,7 @@ public class AuthApplicationService {
         SecurityContextHolder.clearContext();
 
         // 쿠키 제거
-        CookieUtils.deleteCookie(servletResponse, "JSESSIONID", "/");
+        CookieUtil.deleteCookie(servletResponse, "JSESSIONID", "/");
     }
 
     /**

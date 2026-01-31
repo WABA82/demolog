@@ -7,9 +7,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Optional;
 
-public final class CookieUtils {
+public final class CookieUtil {
 
-    private CookieUtils() {
+    private CookieUtil() {
         // util class
     }
 
@@ -60,7 +60,7 @@ public final class CookieUtils {
             String name,
             String path
     ) {
-        CookieUtils.deleteCookie(response, name, path, null);
+        CookieUtil.deleteCookie(response, name, path, null);
     }
 
     /**
