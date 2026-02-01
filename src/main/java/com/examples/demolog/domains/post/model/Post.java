@@ -58,7 +58,7 @@ public class Post {
 
     public void validateAuthorOrThrow(UUID userId) {
         if (!isAuthor(userId)) {
-            throw new PostException(PostErrorCode.UNAUTHORIZED);
+            throw new PostException(PostErrorCode.FORBIDDEN_ACCESS);
         }
     }
 }
