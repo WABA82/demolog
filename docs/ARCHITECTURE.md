@@ -93,6 +93,10 @@ public class ProductController {
   - SecurityContextHolder 직접 사용 금지
   - Controller에서 `@AuthenticationPrincipal`로 주입받은 사용자 정보를 매개변수로 전달받음
   - 예: `public PostResponse createPost(CreatePostRequest request, UUID userId)`
+- **@Transactional 규칙**
+  - 클래스 레벨: `@Transactional(readOnly = true)` (기본값)
+  - 메서드 레벨: 쓰기 메서드만 `@Transactional` 적용 (override)
+  - 이유: 읽기 성능 최적화 + 의도치 않은 쓰기 방지
 
 ```java
 @Service
@@ -136,6 +140,9 @@ public class ProductApplicationService {
 - Stateless (상태와 관련된 값을 맴버 변수로 가질 수 없음) ❌
 - **자기 도메인만 사용**
 - 트랜잭션 관리 ❌
+- **@Transactional 사용 금지** ❌
+  - Application Service에서 트랜잭션 경계 관리
+  - Domain Service는 비즈니스 규칙만 담당
 
 ```java
 @Service
@@ -447,6 +454,20 @@ public class GlobalExceptionHandler {
 - **Application Service는 SecurityContextHolder 접근 금지**
 - **사용자 정보는 메서드 매개변수로 전달**: Controller → Service
 - **각 계층은 보안 컨텍스트에 독립적**: 테스트 용이성과 계층 분리 원칙 준수
+
+### 트랜잭션 관련 규칙
+
+- **@Transactional은 Application Service에만 적용**
+  - 클래스 레벨: `@Transactional(readOnly = true)` 기본 설정
+  - 메서드 레벨: 쓰기 메서드만 `@Transactional` 명시 (readOnly 기본값 override)
+  - Domain Service: 트랜잭션 관리 금지 ❌
+  - Repository / Model: 트랜잭션 관리 금지 ❌
+
+**규칙의 이점:**
+- 읽기 메서드 성능 최적화 (readOnly = true)
+- 의도치 않은 데이터 변경 방지
+- 계층별 책임 명확화: Application Service만 트랜잭션 경계 관리
+- 테스트 용이성: 트랜잭션 로직 집중화
 
 ---
 
