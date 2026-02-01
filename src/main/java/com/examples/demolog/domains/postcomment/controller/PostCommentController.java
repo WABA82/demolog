@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/post-comments")
+@RequestMapping("/api/posts/{postId}/comments")
 @RequiredArgsConstructor
 public class PostCommentController {
 
@@ -29,22 +29,12 @@ public class PostCommentController {
      * 새 댓글 생성
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<PostCommentResponse>> createPost(
+    public ResponseEntity<ApiResponse<PostCommentResponse>> createPostComment(
+            @PathVariable UUID postId,
             @Valid @RequestBody CreatePostCommentRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        PostCommentResponse response = postCommentApplicationService.createPostComment(request, userDetails.getUserId());
-        return ApiResponse.ok(response);
-    }
-
-    /**
-     * 단일 댓글 조회
-     */
-    @GetMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<PostCommentResponse>> getPostComment(
-            @PathVariable UUID commentId
-    ) {
-        PostCommentResponse response = postCommentApplicationService.getPostComment(commentId);
+        PostCommentResponse response = postCommentApplicationService.createPostComment(postId, request, userDetails.getUserId());
         return ApiResponse.ok(response);
     }
 
@@ -52,10 +42,11 @@ public class PostCommentController {
      * 댓글 목록 조회 (페이징)
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostCommentResponse>>> getPosts(
+    public ResponseEntity<ApiResponse<Page<PostCommentResponse>>> getPostComment(
+            @PathVariable UUID postId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<PostCommentResponse> response = postCommentApplicationService.getPostComments(pageable);
+        Page<PostCommentResponse> response = postCommentApplicationService.getPostComments(postId, pageable);
         return ApiResponse.ok(response);
     }
 
@@ -63,14 +54,27 @@ public class PostCommentController {
      * 댓글 수정
      */
     @PutMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<PostCommentResponse>> updatePost(
+    public ResponseEntity<ApiResponse<PostCommentResponse>> updatePostComment(
+            @PathVariable UUID postId,
             @PathVariable UUID commentId,
             @Valid @RequestBody UpdatePostCommentRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        PostCommentResponse response = postCommentApplicationService.update(commentId, request, userDetails.getUserId());
+        PostCommentResponse response = postCommentApplicationService.update(postId, commentId, request, userDetails.getUserId());
         return ApiResponse.ok(response);
     }
 
+    /**
+     * 댓글 삭제
+     */
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deletePostComment(
+            @PathVariable UUID postId,
+            @PathVariable UUID commentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        postCommentApplicationService.deletePostComment(postId, commentId, userDetails.getUserId());
+        return ApiResponse.noContent();
+    }
 
 }
