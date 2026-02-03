@@ -7,6 +7,8 @@ import com.examples.demolog.domains.post.exception.PostErrorCode;
 import com.examples.demolog.domains.post.exception.PostException;
 import com.examples.demolog.domains.post.model.Post;
 import com.examples.demolog.domains.post.repository.PostRepository;
+import com.examples.demolog.domains.postrevision.model.PostRevision;
+import com.examples.demolog.domains.postrevision.repository.PostRevisionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class PostApplicationService {
 
     private final PostRepository postRepository;
+    private final PostRevisionRepository postRevisionRepository;
 
     @Transactional
     public PostResponse createPost(CreatePostRequest request, UUID authorId) {
@@ -50,6 +53,11 @@ public class PostApplicationService {
     public PostResponse updatePost(UUID postId, UpdatePostRequest request, UUID userId) {
         Post post = findPostById(postId);
         post.validateAuthorOrThrow(userId);
+
+        int nextRevisionNumber = postRevisionRepository.countByPostId(postId) + 1;
+        PostRevision revision = PostRevision.create(post, userId, nextRevisionNumber);
+        postRevisionRepository.save(revision);
+
         post.update(request.title(), request.content());
         return PostResponse.from(post);
     }
