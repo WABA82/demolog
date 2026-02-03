@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build and Run Commands
+## Quick Reference
+
+### Build and Run Commands
 
 ```bash
 # Build
@@ -24,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew clean build
 ```
 
-## Tech Stack
+### Tech Stack
 
 - Java 21
 - Spring Boot 3.5.x with Web, JPA, Validation, Actuator
@@ -32,109 +34,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Lombok
 - SpringDoc OpenAPI (Swagger UI)
 
-## Architecture Overview
+## Documentation
 
-This is a DDD-based monolithic Spring Boot application following domain-centric package structure with layer responsibility separation.
+This is a DDD-based monolithic Spring Boot application. Detailed documentation is available in the `docs/` folder:
 
-See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed guide.
+### 📚 Architecture & Design
 
-### Package Structure
+**[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete architecture guide
+- Package structure and domain-centric organization
+- Layer responsibilities and design principles
+- Entity, Value Object, Repository patterns
+- DTO and Exception handling
+- Naming conventions (classes and methods)
+- Code examples for each layer
 
+**Key Highlights:**
+| Layer | Responsibility | Can Reference |
+|-------|-----------------|---------------|
+| **Controller** | HTTP handling, validation | Application Service only |
+| **Application Service** | Use-case orchestration | Repository, Domain Service |
+| **Domain Service** | Business rules | Repository, Model |
+| **Model** (Entity/VO) | Core business logic | Value Objects, Enums |
+
+### 🧪 Testing & Quality
+
+**[TESTING.md](docs/TESTING.md)** - Comprehensive testing strategy
+- Test pyramid and layer-by-layer testing approach
+- Unit tests: Model, Domain Service, Application Service
+- Integration tests: Repository, Controller
+- Test patterns: BDD style, @Nested, @DisplayName
+- Complete code examples for each test type
+- Running specific tests and viewing reports
+
+**Quick Test Commands:**
+```bash
+./gradlew test --tests "*.ProductTest"
+./gradlew test --tests "*.ProductTest\$StockManagement"
+open build/reports/tests/test/index.html
 ```
-com.examples.springbootmonolithicstarter
-├── global/                    # Cross-cutting concerns
-│   ├── config/                # Global configs (JPA, Security, Web, Kafka)
-│   ├── response/              # API response standards (ApiResponse, ErrorResponse)
-│   ├── exception/             # Global exception handling (GlobalExceptionHandler, ErrorCode)
-│   └── util/                  # Utilities
-│
-└── domains/                   # Domain modules
-    ├── common/                # Shared domain infrastructure (outbox, saga)
-    └── {domain-name}/         # e.g., order, product, customer
-        ├── controller/        # REST controllers
-        ├── service/
-        │   ├── application/   # Application Service (use-case orchestration)
-        │   └── domain/        # Domain Service (business rules)
-        ├── repository/        # JPA repositories
-        ├── model/             # Entity, Value Object, Enum
-        ├── dto/
-        │   ├── request/       # Request DTOs
-        │   └── response/      # Response DTOs
-        ├── exception/         # Domain exceptions
-        ├── event/             # Domain events (optional)
-        ├── saga/              # Saga implementation (optional)
-        └── kafka/             # Kafka Producer/Consumer (optional)
+
+### 📝 Commits & Versioning
+
+**[COMMITS.md](docs/COMMITS.md)** - Conventional Commits guide
+- Commit message structure and types (feat, fix, docs, refactor, etc.)
+- Scope and breaking changes
+- Examples for different commit scenarios
+- Integration with version management and changelog generation
+
+**Commit Format:**
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
 ```
 
-### Layer Rules
-
-| Layer | Can Reference | Cannot Reference |
-|-------|--------------|------------------|
-| Controller | Application Service only | Domain Service, Repository, Model |
-| Application Service | Own/other domain's Repository, Domain Service | Other domain's Application Service |
-| Domain Service | Own domain's Repository, Model | Other domain's Domain Service |
-| Model | Value Object, Enum | Repository, Service |
-
-### Key Design Principles
-
-**Controller**: HTTP handling, request validation (@Valid), calls Application Service only - no business logic
-
-**Application Service**: Use-case flow management, transaction boundaries, orchestrates Repository/Domain Service
-
-**Domain Service**: Business rules that don't fit in a single Entity, stateless, own domain only, no transaction management
-
-**Entity**:
-- `protected` default constructor with `@NoArgsConstructor(access = AccessLevel.PROTECTED)`
-- Static factory methods for object creation
-- Getter only, no Setter
-- Business methods for state changes (e.g., `cancel()`, `confirm()`, `ship()`)
-
-**Value Object**:
-- Static factory methods, validation on creation
-- Immutable (final fields), override `equals/hashCode`
-- Use `@Embeddable`
-
-**DTO**: Request/Response separated, Response uses `from()` factory method
-
-### Naming Conventions
-
-#### Class Names
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| Controller | `{Domain}Controller` | OrderController |
-| Application Service | `{Domain}ApplicationService` | OrderApplicationService |
-| Domain Service | `{Concept}Service` | OrderPricingService, StockService |
-| Entity | Noun | Order, Product |
-| Value Object | Noun | Money, Address |
-| Repository | `{Entity}Repository` | OrderRepository |
-| Request DTO | `{Verb}{Domain}Request` | CreateOrderRequest |
-| Response DTO | `{Domain}Response` | OrderResponse |
-| Exception | `{Domain}{Reason}Exception` | OrderNotFoundException |
-
-#### Method Names
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| Application Service | Use-case verb | createOrder, cancelOrder |
-| Domain Service | Domain rule verb | calculateTotalPrice, reserveStock |
-| Entity | Business action verb | cancel, confirm, ship |
-| Repository | find, save, delete | findByCustomerId, save |
-
-## Testing Strategy
-
-See [TESTING.md](docs/TESTING.md) for detailed testing guide.
-
-| Layer | Test Type | Annotation | Speed |
-|-------|-----------|------------|-------|
-| Model (Entity, VO) | Unit Test | None | Fast |
-| Domain Service | Unit Test | None | Fast |
-| Application Service | Unit Test | `@ExtendWith(MockitoExtension.class)` | Fast |
-| Repository | Slice Test | `@DataJpaTest` | Medium |
-| Controller | Slice Test | `@WebMvcTest` | Medium |
-
-### Test Patterns
-- **BDD Style**: given-when-then structure
-- **@Nested**: Group related tests
-- **@DisplayName**: Korean test names for readability
-- **Factory Methods**: Reusable test data creation
+Examples:
+- `feat(auth): JWT token expiration handling`
+- `fix(api): Handle 404 when search returns no results`
+- `docs: Update README installation guide`
