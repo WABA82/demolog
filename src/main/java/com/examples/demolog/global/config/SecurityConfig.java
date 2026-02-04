@@ -167,7 +167,8 @@ public class SecurityConfig {
                 "X-Requested-With",
                 "Content-Type",
                 "Authorization",
-                "X-CSRF-TOKEN"
+                "X-CSRF-TOKEN",
+                "Idempotency-Key"
         ));
 
         // 클라이언트에서 접근 가능한 응답 헤더
