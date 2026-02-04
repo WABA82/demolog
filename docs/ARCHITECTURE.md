@@ -1,6 +1,6 @@
-# Architecture Guide
+# CONVENTION Guide
 
-> DDD 기반 스프링부트 애플리케이션을 위한 아키텍처 컨벤션 전략 가이드입니다.
+> DDD 기반 스프링부트 애플리케이션을 위한 컨벤션 전략 가이드입니다.
 
 ---
 
@@ -50,6 +50,10 @@ com.example.app
 - 요청 검증(@Valid)
 - **Application Service만 호출**
 - 비즈니스 로직 ❌
+- **사용자 정보 필요 시 `@AuthenticationPrincipal` 우선 사용**
+  - Controller에서 사용자 정보를 주입받아 Application Service에 전달
+  - SecurityContextHolder 직접 사용 금지
+  - 예: `@AuthenticationPrincipal CustomUserDetails userDetails`
 
 ```java
 @RestController
@@ -61,9 +65,10 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
-            @Valid @RequestBody CreateProductRequest request
+            @Valid @RequestBody CreateProductRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails  // 사용자 정보 주입
     ) {
-        ProductResponse response = productApplicationService.createProduct(request);
+        ProductResponse response = productApplicationService.createProduct(request, userDetails.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response));
     }
@@ -84,6 +89,14 @@ public class ProductController {
 - 트랜잭션 경계 관리
 - 여러 Repository / Domain Service 조합
 - **다른 도메인의 Application Service 호출 ❌**
+- **사용자 정보 필요 시 매개변수로 수신**
+  - SecurityContextHolder 직접 사용 금지
+  - Controller에서 `@AuthenticationPrincipal`로 주입받은 사용자 정보를 매개변수로 전달받음
+  - 예: `public PostResponse createPost(CreatePostRequest request, UUID userId)`
+- **@Transactional 규칙**
+  - 클래스 레벨: `@Transactional(readOnly = true)` (기본값)
+  - 메서드 레벨: 쓰기 메서드만 `@Transactional` 적용 (override)
+  - 이유: 읽기 성능 최적화 + 의도치 않은 쓰기 방지
 
 ```java
 @Service
@@ -127,6 +140,9 @@ public class ProductApplicationService {
 - Stateless (상태와 관련된 값을 맴버 변수로 가질 수 없음) ❌
 - **자기 도메인만 사용**
 - 트랜잭션 관리 ❌
+- **@Transactional 사용 금지** ❌
+  - Application Service에서 트랜잭션 경계 관리
+  - Domain Service는 비즈니스 규칙만 담당
 
 ```java
 @Service
@@ -416,18 +432,160 @@ public class GlobalExceptionHandler {
 
 ---
 
-## 🔗 의존성 규칙
+## 🔗 규칙 및 원칙
+
+### 의존성 규칙
+
+**계층 간 참조 규칙**
 
 | 계층 | 참조 가능 | 참조 금지 |
 | --- | --- | --- |
-| **Controller** | Application Service | Domain Service, Repository, Model |
-| **Application Service** | 자기/다른 도메인의 Repository, Domain Service | 다른 도메인의 Application Service |
-| **Domain Service** | 자기 도메인의 Repository, Model | 다른 도메인의 Domain Service |
+| **Controller** | Application Service only | Domain Service, Repository, Model |
+| **Application Service** | 자기 도메인의 Repository, Domain Service<br/>다른 도메인의 Repository | 다른 도메인의 Application Service |
+| **Domain Service** | 자기 도메인의 Repository, Model | 다른 도메인의 Domain Service, Model |
 | **Model** | Value Object, Enum | Repository, Service |
-- Controller → Application Service
-- Application Service → Repository / Domain Service
-- Domain Service → Model
-- Model → 다른 계층 의존 ❌
+
+**의존성 흐름**
+
+```
+Controller
+    ↓
+Application Service ← → Repository, Domain Service (같은 도메인)
+                  ↓
+             Domain Service (다른 도메인의 Repository 직접 참조 가능)
+                  ↓
+                Model (Value Object, Enum)
+```
+
+**핵심 규칙:**
+- Controller는 Application Service만 호출
+- Application Service는 자기/다른 도메인의 Repository 참조 가능
+- Domain Service는 자기 도메인만 조작 (다른 도메인의 Model 참조 ❌)
+- Model은 순수 비즈니스 로직만 담당 (계층 의존 ❌)
+
+---
+
+### 보안 규칙
+
+**사용자 정보 관리 원칙:**
+
+- **사용자 정보는 Controller에서만 수신**: `@AuthenticationPrincipal CustomUserDetails` 사용
+- **Application Service는 SecurityContextHolder 직접 접근 금지** ❌
+- **사용자 정보는 메서드 매개변수로만 전달**: Controller → Application Service
+  - 예: `public PostResponse createPost(CreatePostRequest request, UUID userId)`
+- **각 계층은 보안 컨텍스트에 독립적**: 테스트 용이성과 계층 분리 원칙 준수
+
+**Controller 예시:**
+```java
+@PostMapping
+public ResponseEntity<ApiResponse<PostResponse>> createPost(
+        @Valid @RequestBody CreatePostRequest request,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+) {
+    // 사용자 정보를 매개변수로 전달
+    PostResponse response = postApplicationService.createPost(request, userDetails.getUserId());
+    return ApiResponse.created(response);
+}
+```
+
+---
+
+### 컨트롤러 메서드 파라미터 순서 규칙
+
+**파라미터 배치 원칙: 식별 → 데이터 → 인증 → 메타데이터**
+
+| 순서 | 파라미터 종류 | 어노테이션 | 설명 | 예시 |
+| --- | --- | --- | --- | --- |
+| 1 | 경로 변수 | `@PathVariable` | 자원을 식별하는 필수 값 (가장 앞) | `UUID postId` |
+| 2 | 본문 데이터 | `@RequestBody` | API가 처리할 핵심 데이터 객체 | `CreatePostRequest request` |
+| 3 | 쿼리 파라미터 | `@RequestParam` | 필터링, 정렬 등 옵션 값 | `String keyword`, `int page` |
+| 4 | 인증/인가 정보 | `@AuthenticationPrincipal` | 현재 사용자 정보 | `CustomUserDetails userDetails` |
+| 5 | 페이징 정보 | `Pageable` | 페이징 관련 메타데이터 | `Pageable pageable` |
+| 6 | 시스템 파라미터 | - | HttpServletRequest, Locale 등 (가장 마지막) | `HttpServletRequest request` |
+
+**잘못된 예시 ❌:**
+```java
+@PostMapping
+public ResponseEntity<ApiResponse<PostResponse>> createPost(
+        @AuthenticationPrincipal CustomUserDetails userDetails,  // ❌ 너무 앞에 배치
+        @PathVariable UUID postId,                                // ❌ 식별자가 뒤에
+        @Valid @RequestBody CreatePostRequest request             // ❌ 데이터가 마지막
+) {
+    // ...
+}
+```
+
+**올바른 예시 ✅:**
+```java
+@PostMapping("/{postId}/comments")
+public ResponseEntity<ApiResponse<PostCommentResponse>> createPostComment(
+        @PathVariable UUID postId,                                // ✅ 1. 경로 변수 (식별)
+        @Valid @RequestBody CreatePostCommentRequest request,     // ✅ 2. 본문 데이터
+        @AuthenticationPrincipal CustomUserDetails userDetails    // ✅ 3. 인증 정보
+) {
+    PostCommentResponse response = postCommentApplicationService
+            .createPostComment(postId, request, userDetails.getUserId());
+    return ApiResponse.created(response);
+}
+
+@GetMapping("/{postId}/comments")
+public ResponseEntity<ApiResponse<Page<PostCommentResponse>>> getPostComments(
+        @PathVariable UUID postId,                                // ✅ 1. 경로 변수
+        @RequestParam(required = false) String keyword,            // ✅ 2. 쿼리 파라미터
+        @PageableDefault(size = 20, sort = "createdAt")
+        Pageable pageable                                         // ✅ 3. 페이징 정보
+) {
+    Page<PostCommentResponse> response = postCommentApplicationService
+            .getPostComments(postId, keyword, pageable);
+    return ApiResponse.ok(response);
+}
+```
+
+**규칙의 이점:**
+- 메서드 시그니처 일관성: 팀 내 코드 스타일 통일
+- 직관성: 가장 중요한 정보(식별자)가 먼저 나타남
+- 가독성: 논리적 순서로 파라미터 배치
+- 유지보수성: 새로운 팀원도 쉽게 이해 가능
+
+---
+
+### 트랜잭션 규칙
+
+**@Transactional 사용 원칙:**
+- **Application Service만 트랜잭션 관리** ✅
+- **Domain Service: 트랜잭션 관리 금지** ❌
+- **Repository / Model / Controller: 트랜잭션 관리 금지** ❌
+
+**적용 패턴:**
+```java
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)  // 클래스 레벨: 기본값
+public class PostApplicationService {
+
+    private final PostRepository postRepository;
+    private final PostCommentApplicationService postCommentApplicationService;
+
+    @Transactional  // 메서드 레벨: 쓰기 메서드만 명시 (readOnly override)
+    public PostResponse createPost(CreatePostRequest request, UUID userId) {
+        Post post = Post.create(request.title(), request.content(), userId);
+        return PostResponse.from(postRepository.save(post));
+    }
+
+    // 읽기 메서드는 클래스 레벨의 readOnly = true 상속
+    public PostResponse getPost(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostException(PostErrorCode.NOT_FOUND));
+        return PostResponse.from(post);
+    }
+}
+```
+
+**규칙의 이점:**
+- 읽기 메서드 성능 최적화 (readOnly = true)
+- 의도치 않은 데이터 변경 방지 (읽기 메서드는 쓰기 차단)
+- 계층별 책임 명확화: Application Service만 트랜잭션 경계 관리
+- 테스트 용이성: 트랜잭션 로직 한곳에 집중화
 
 ---
 
