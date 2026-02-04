@@ -1,5 +1,6 @@
 package com.examples.demolog.domains.post.controller;
 
+import com.examples.demolog.domains.common.idempotency.annotation.Idempotent;
 import com.examples.demolog.domains.post.dto.request.CreatePostRequest;
 import com.examples.demolog.domains.post.dto.request.UpdatePostRequest;
 import com.examples.demolog.domains.post.dto.response.PostResponse;
@@ -31,6 +32,7 @@ public class PostController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Idempotent
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
             @Valid @RequestBody CreatePostRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails

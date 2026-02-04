@@ -1,5 +1,6 @@
 package com.examples.demolog.domains.postcomment.controller;
 
+import com.examples.demolog.domains.common.idempotency.annotation.Idempotent;
 import com.examples.demolog.domains.postcomment.dto.request.CreatePostCommentRequest;
 import com.examples.demolog.domains.postcomment.dto.request.UpdatePostCommentRequest;
 import com.examples.demolog.domains.postcomment.dto.response.PostCommentResponse;
@@ -29,6 +30,7 @@ public class PostCommentController {
      * 새 댓글 생성
      */
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<PostCommentResponse>> createPostComment(
             @PathVariable UUID postId,
             @Valid @RequestBody CreatePostCommentRequest request,

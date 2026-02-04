@@ -1,5 +1,6 @@
 package com.examples.demolog.domains.postlike.controller;
 
+import com.examples.demolog.domains.common.idempotency.annotation.Idempotent;
 import com.examples.demolog.domains.postlike.dto.response.PostLikeResponse;
 import com.examples.demolog.domains.postlike.service.PostLikeApplicationService;
 import com.examples.demolog.global.response.ApiResponse;
@@ -26,6 +27,7 @@ public class PostLikeController {
      * 게시물에 좋아요 추가
      */
     @PostMapping
+    @Idempotent
     public ResponseEntity<ApiResponse<PostLikeResponse>> likePost(
             @PathVariable UUID postId,
             @AuthenticationPrincipal CustomUserDetails userDetails
