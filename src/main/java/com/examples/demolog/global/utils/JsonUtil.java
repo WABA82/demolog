@@ -17,7 +17,7 @@ public class JsonUtil {
         JsonUtil.objectMapper = objectMapper;
     }
 
-    public static <T> String toJson(T object) {
+    public static <T> String toJsonStr(T object) {
         try {
             return objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
@@ -25,7 +25,7 @@ public class JsonUtil {
         }
     }
 
-    public static <T> T fromJson(String jsonString, Class<T> clazz) {
+    public static <T> T fromJsonStr(String jsonString, Class<T> clazz) {
         try {
             return objectMapper.readValue(jsonString, clazz);
         } catch (JsonProcessingException e) {
