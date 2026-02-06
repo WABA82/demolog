@@ -3,7 +3,7 @@ package com.examples.demolog.domains.common.idempotency.aspect;
 import com.examples.demolog.domains.common.idempotency.annotation.Idempotent;
 import com.examples.demolog.domains.common.idempotency.exception.IdempotencyErrorCode;
 import com.examples.demolog.domains.common.idempotency.exception.IdempotencyException;
-import com.examples.demolog.domains.common.idempotency.service.IdempotencyService;
+import com.examples.demolog.domains.common.idempotency.service.IdempotencyApplicationService;
 import com.examples.demolog.global.exception.BusinessException;
 import com.examples.demolog.global.exception.CommonErrorCode;
 import com.examples.demolog.global.exception.ErrorCode;
@@ -47,7 +47,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class IdempotencyAspect {
 
-    private final IdempotencyService idempotencyService;
+    private final IdempotencyApplicationService idempotencyApplicationService;
 
     @Around("@annotation(idempotent)")
     public Object checkIdempotency(ProceedingJoinPoint pjp, Idempotent idempotent) throws Throwable {
@@ -64,10 +64,10 @@ public class IdempotencyAspect {
         String requestUri = attributes.getRequest().getRequestURI();
 
         // 2단계: 캐시된 멱등성 확인 및 응답 쓰기
-        if (idempotencyService.hasCachedIdempotency(idempotencyToken, requestMethod, requestUri, response)) return null;
+        if (idempotencyApplicationService.hasCachedIdempotency(idempotencyToken, requestMethod, requestUri, response)) return null;
 
         // 3단계: 신규 멱등성 저장 또는 캐시 확인
-        String status = idempotencyService.createIfNotCached(idempotencyToken, requestMethod, requestUri, response);
+        String status = idempotencyApplicationService.createIfNotCached(idempotencyToken, requestMethod, requestUri, response);
         if (Objects.equals("CACHED", status)) return null;
 
         // 4단계: 비즈니스 로직 실행 및 결과 저장
@@ -100,19 +100,19 @@ public class IdempotencyAspect {
     private Object executeAndSaveResponse(ProceedingJoinPoint pjp, UUID idempotencyToken, HttpServletResponse response) throws Throwable {
         try {
             Object responseResult = pjp.proceed();
-            idempotencyService.updateResponse(idempotencyToken, response.getStatus(), JsonUtil.toJsonStr(responseResult));
+            idempotencyApplicationService.updateResponse(idempotencyToken, response.getStatus(), JsonUtil.toJsonStr(responseResult));
             return responseResult;
 
         } catch (BusinessException be) {
             int responseCode = be.getErrorCode().getStatus().value();
             ErrorResponse errorResponse = ErrorResponse.of(be.getErrorCode());
-            idempotencyService.updateResponse(idempotencyToken, responseCode, JsonUtil.toJsonStr(errorResponse));
+            idempotencyApplicationService.updateResponse(idempotencyToken, responseCode, JsonUtil.toJsonStr(errorResponse));
             throw be;
 
         } catch (Exception e) {
             ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
             ErrorResponse errorResponse = ErrorResponse.of(errorCode);
-            idempotencyService.updateResponse(idempotencyToken, errorCode.getStatus().value(), JsonUtil.toJsonStr(errorResponse));
+            idempotencyApplicationService.updateResponse(idempotencyToken, errorCode.getStatus().value(), JsonUtil.toJsonStr(errorResponse));
             throw e;
         }
     }
