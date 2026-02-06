@@ -54,10 +54,12 @@ public class PostApplicationService {
         Post post = findPostById(postId);
         post.validateAuthorOrThrow(userId);
 
+        // 게시물 수정 전 내용을 PostRevision로 저장
         int nextRevisionNumber = postRevisionRepository.countByPostId(postId) + 1;
         PostRevision revision = PostRevision.create(post, userId, nextRevisionNumber);
         postRevisionRepository.save(revision);
 
+        // 게시물 업데이트
         post.update(request.title(), request.content());
         return PostResponse.from(post);
     }
