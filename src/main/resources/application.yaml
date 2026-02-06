@@ -11,8 +11,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 10MB        # 파일 하나당 10MB
-      max-request-size: 100MB    # 전체 요청 100MB
+      max-file-size: 10MB       # 개별 파일 당 최대 크기
+      max-request-size: 30MB    # 전체 요청(파일+바디) 최대 크기
 
   web:
     resources:
