@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ApiResponse<T> {
+public class ApiResponse<T> implements CommonResponse {
 
     private boolean success;
     private String message;
