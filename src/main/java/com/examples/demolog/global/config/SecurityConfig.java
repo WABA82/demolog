@@ -110,7 +110,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json;charset=UTF-8");
-                            response.getWriter().write(objectMapper.writeValueAsString(CommonErrorCode.FORBIDDEN));
+                            response.getWriter().write(objectMapper.writeValueAsString(ErrorResponse.of(CommonErrorCode.FORBIDDEN)));
                         })
                 );
 
