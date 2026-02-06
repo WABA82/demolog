@@ -15,7 +15,10 @@ public enum CommonErrorCode implements ErrorCode {
 
     // Security
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "잘못된 입력값입니다."),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "리소스를 찾을 수 없습니다.");
+    FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "리소스를 찾을 수 없습니다."),
+
+    // JsonUtil
+    JSON_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JSON_PROCESSING_ERROR", "Json 데이터 처리 중 에러가 발생하였습니다.");
 
     // CommonErrorCode fields
     private final HttpStatus status;

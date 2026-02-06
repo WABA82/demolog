@@ -31,6 +31,11 @@ public class ErrorResponse {
         return new ErrorResponse(errorCode.getStatus().value(), errorCode.getCode(), errorCode.getMessage());
     }
 
+    public static ErrorResponse of(ErrorCode errorCode, String message) {
+        if (message == null || message.isBlank()) message = errorCode.getMessage();
+        return new ErrorResponse(errorCode.getStatus().value(), errorCode.getCode(), message);
+    }
+
     public void addFieldError(String field, String message) {
         this.errors.add(new FieldError(field, message));
     }

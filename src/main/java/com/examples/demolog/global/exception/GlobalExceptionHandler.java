@@ -16,23 +16,34 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
-        log.error("BusinessException: {}", e.getMessage());
-        ErrorResponse response = ErrorResponse.of(e.getErrorCode());
+        log.warn("[BusinessException]: {}", e.getMessage());
+        ErrorResponse response = ErrorResponse.of(e.getErrorCode(), e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getStatus()).body(response);
     }
 
     /*
-     * - ( @ModelAttribute ) 바인딩 실패
-     * - 유효성 검사 실패 시
+     * 바인딩(@ModelAttribute) 에러 또는 유효성 검사 에러
      */
     @ExceptionHandler(BindException.class)
     protected ResponseEntity<ErrorResponse> handleBindException(BindException e) {
-        log.error("BindException: {}", e.getMessage());
-        ErrorResponse response = ErrorResponse.of(CommonErrorCode.INVALID_INPUT_VALUE);
-        // 필드 오류 추가
-        e.getBindingResult().getFieldErrors()
-                .forEach(error -> response.addFieldError(error.getField(), error.getDefaultMessage()));
-        return ResponseEntity.status(CommonErrorCode.INVALID_INPUT_VALUE.getStatus()).body(response);
+        log.warn("[BindException]: {}", e.getMessage());
+        ErrorCode errorCode = CommonErrorCode.INVALID_INPUT_VALUE;
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        // 응답에 필드 오류 추가
+        e.getBindingResult().getFieldErrors().forEach(error ->
+                response.addFieldError(error.getField(), error.getDefaultMessage())
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    /**
+     * 유틸 에러
+     */
+    @ExceptionHandler(UtilsException.class)
+    protected ResponseEntity<ErrorResponse> handleUtilsException(UtilsException e) {
+        log.error("[UtilsException]: ", e);
+        ErrorResponse response = ErrorResponse.of(e.getErrorCode(), e.getMessage());
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(response);
     }
 
     /**
@@ -40,9 +51,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponse> handleException(Exception e) {
-        log.error("Exception: {}", e.getMessage(), e);
-        CommonErrorCode commonErrorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
-        ErrorResponse response = ErrorResponse.of(CommonErrorCode.INTERNAL_SERVER_ERROR);
-        return ResponseEntity.status(commonErrorCode.getStatus()).body(response);
+        log.error("[Exception]: ", e);
+        ErrorCode errorCode = CommonErrorCode.INTERNAL_SERVER_ERROR;
+        ErrorResponse response = ErrorResponse.of(errorCode);
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 }
