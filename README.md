@@ -1,4 +1,4 @@
-# Demolog - DDD 기반 SNS/블로그 플랫폼
+# Demolog - DDD 기반 모놀리식 아키텍처 SNS 데모 프로젝트
 
 ![Java](https://img.shields.io/badge/Java-21-blue?style=flat-square)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-green?style=flat-square)
@@ -7,7 +7,7 @@
 
 ## 프로젝트 개요
 
-**Demolog**는 DDD(Domain-Driven Design) 아키텍처를 기반으로 구축된 엔터프라이즈급 SNS/블로그 플랫폼입니다.
+**Demolog**는 DDD 기반 모놀리식 아키텍처 SNS 데모 프로젝트입니다.
 
 ### 주요 특징
 
