@@ -102,3 +102,10 @@ docker-compose.override.yml
 *.zip
 *.tar.gz
 *.rar
+
+########################################
+# Claude Code (AI Code Assistant)
+########################################
+.claude/
+.claude.json
+*.claude.json
