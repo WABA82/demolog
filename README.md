@@ -1,9 +1,15 @@
-# Demolog - DDD 기반 모놀리식 아키텍처 SNS 데모 프로젝트
+# Demolog - SNS 데모 프로젝트
 
 ![Java](https://img.shields.io/badge/Java-21-blue?style=flat-square)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10-green?style=flat-square)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-orange?style=flat-square)
 ![Redis](https://img.shields.io/badge/Redis-9.0.1-red?style=flat-square)
+
+**Spring Boot 기반 SNS 데모 프로젝트**입니다.
+
+게시물, 댓글, 게시물 좋아요, 알림 등 SNS의 핵심 기능을 중심으로, 특히 **Post 도메인 설계와 구현에 집중**하여 개발했습니다.
+
+실제 서비스 운영 환경에서 발생할 수 있는 문제를 고려하여 **데이터 중복 생성 방지**, **동시 요청 방어**, **도메인 간 느슨한 결합을 위한 구조 설계** 등을 직접 고민하고 해결하는 것을 목표로 진행한 프로젝트입니다.
 
 ## 프로젝트 개요
 
