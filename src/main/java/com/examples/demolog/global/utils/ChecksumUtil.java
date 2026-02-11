@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -100,7 +101,7 @@ public final class ChecksumUtil {
      * 두 체크섬 값이 동일한지 비교
      */
     public static boolean verify(String data, String expectedChecksum, String algorithm) {
-        String calculatedChecksum = getChecksum(data, algorithm);
+        String calculatedChecksum = getChecksum(data.getBytes(StandardCharsets.UTF_8), algorithm);
         return calculatedChecksum.equalsIgnoreCase(expectedChecksum);
     }
 
