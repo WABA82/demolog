@@ -1,6 +1,5 @@
 package com.examples.demolog.domains.postlike.event;
 
-import com.examples.demolog.domains.common.outbox.model.EventType;
 import com.examples.demolog.domains.common.outbox.model.Outbox;
 import com.examples.demolog.domains.common.outbox.repository.OutboxRepository;
 import com.examples.demolog.domains.post.model.Post;
@@ -21,15 +20,7 @@ public class PostLikeOutboxWriter {
      */
     public void savePostLikedEvent(Post post, UUID actorId) {
         PostLikeEvent event = PostLikeEvent.liked(post.getId(), post.getAuthorId(), actorId);
-
-        Outbox outbox = Outbox.create(
-                EventType.POST_LIKED.getTopic(),
-                EventType.POST_LIKED.getAggregateType(),
-                post.getId(),
-                EventType.POST_LIKED.name(),
-                JsonUtil.toJsonStr(event)
-        );
-
+        Outbox outbox = Outbox.create(event, JsonUtil.toJsonStr(event));
         outboxRepository.save(outbox);
     }
 
@@ -38,15 +29,7 @@ public class PostLikeOutboxWriter {
      */
     public void savePostUnlikedEvent(Post post, UUID actorId) {
         PostLikeEvent event = PostLikeEvent.unliked(post.getId(), post.getAuthorId(), actorId);
-
-        Outbox outbox = Outbox.create(
-                EventType.POST_UNLIKED.getTopic(),
-                EventType.POST_UNLIKED.getAggregateType(),
-                post.getId(),
-                EventType.POST_UNLIKED.name(),
-                JsonUtil.toJsonStr(event)
-        );
-
+        Outbox outbox = Outbox.create(event, JsonUtil.toJsonStr(event));
         outboxRepository.save(outbox);
     }
 }

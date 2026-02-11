@@ -1,5 +1,6 @@
 package com.examples.demolog.domains.common.outbox.model;
 
+import com.examples.demolog.domains.common.kafka.event.DomainEvent;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -26,6 +27,10 @@ public class Outbox {
     @Column(nullable = false, length = 100)
     private String topic;
 
+    // 이벤트 타입 (예: "POST_LIKED", "POST_COMMENTED")
+    @Column(nullable = false, length = 50)
+    private String eventType;
+
     // 집계 타입 (예: "PostLike", "Post")
     @Column(nullable = false, length = 50)
     private String aggregateType;
@@ -33,10 +38,6 @@ public class Outbox {
     // 집계 ID (이벤트 발생 대상의 식별자)
     @Column(nullable = false, columnDefinition = "BINARY(16)")
     private UUID aggregateId;
-
-    // 이벤트 타입 (예: "POST_LIKED", "POST_COMMENTED")
-    @Column(nullable = false, length = 50)
-    private String eventType;
 
     // 이벤트 페이로드 (JSON)
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -57,17 +58,12 @@ public class Outbox {
     /**
      * 생성 메서드
      */
-    public static Outbox create(String topic,
-                                String aggregateType,
-                                UUID aggregateId,
-                                String eventType,
-                                String payload
-    ) {
+    public static Outbox create(DomainEvent domainEvent, String payload) {
         return Outbox.builder()
-                .aggregateType(aggregateType)
-                .aggregateId(aggregateId)
-                .eventType(eventType)
-                .topic(topic)
+                .topic(domainEvent.topic())
+                .eventType(domainEvent.eventType())
+                .aggregateType(domainEvent.aggregateType())
+                .aggregateId(domainEvent.aggregateId())
                 .payload(payload)
                 .status(OutboxStatus.PENDING)
                 .createdAt(LocalDateTime.now())
