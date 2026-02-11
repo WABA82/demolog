@@ -24,6 +24,10 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    querydslVersion = "6.12"
+}
+
 dependencies {
     // spring boot
     implementation('org.springframework.boot:spring-boot-starter-web') { // undertow 사용을 위한 web starter에서 tomcat 제외
@@ -38,6 +42,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.springframework.kafka:spring-kafka' // Kafka
+
+    // queryDSL
+    implementation "io.github.openfeign.querydsl:querydsl-jpa:${querydslVersion}"
+    annotationProcessor "io.github.openfeign.querydsl:querydsl-apt:${querydslVersion}:jpa"
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+    testAnnotationProcessor "io.github.openfeign.querydsl:querydsl-apt:${querydslVersion}:jpa"
+    testAnnotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
     // Spring Session Redis
     implementation 'org.springframework.session:spring-session-data-redis'
@@ -61,6 +72,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
 }
 
 tasks.named('test') {
