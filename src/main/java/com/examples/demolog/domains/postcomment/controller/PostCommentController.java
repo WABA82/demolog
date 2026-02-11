@@ -29,8 +29,8 @@ public class PostCommentController {
     /**
      * 새 댓글 생성
      */
-    @PostMapping
     @Idempotent
+    @PostMapping
     public ResponseEntity<ApiResponse<PostCommentResponse>> createPostComment(
             @PathVariable UUID postId,
             @Valid @RequestBody CreatePostCommentRequest request,

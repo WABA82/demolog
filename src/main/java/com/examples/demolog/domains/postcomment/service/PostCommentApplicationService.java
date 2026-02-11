@@ -1,9 +1,11 @@
 package com.examples.demolog.domains.postcomment.service;
 
+import com.examples.demolog.domains.post.model.Post;
 import com.examples.demolog.domains.post.repository.PostRepository;
 import com.examples.demolog.domains.postcomment.dto.request.CreatePostCommentRequest;
 import com.examples.demolog.domains.postcomment.dto.request.UpdatePostCommentRequest;
 import com.examples.demolog.domains.postcomment.dto.response.PostCommentResponse;
+import com.examples.demolog.domains.postcomment.event.PostCommentOutboxWriter;
 import com.examples.demolog.domains.postcomment.exception.PostCommentErrorCode;
 import com.examples.demolog.domains.postcomment.exception.PostCommentException;
 import com.examples.demolog.domains.postcomment.model.PostComment;
@@ -27,6 +29,8 @@ public class PostCommentApplicationService {
 
     private final PostRepository postRepository;
 
+    private final PostCommentOutboxWriter outboxWriter;
+
     /**
      * 댓글 생성
      */
@@ -37,11 +41,13 @@ public class PostCommentApplicationService {
             UUID authorId
     ) {
         // 게시글 존재 여부 확인
-        if (postRepository.existsById(postId)) {
-            throw new PostCommentException(PostCommentErrorCode.POST_NOT_FOUND);
-        }
+        Post post = postRepository.findById(postId).orElseThrow(() -> new PostCommentException(PostCommentErrorCode.POST_NOT_FOUND));
 
-        return PostCommentResponse.from(postCommentRepository.save(createPostCommentRequest.toEntity(postId, authorId)));
+        PostComment saved = postCommentRepository.save(createPostCommentRequest.toEntity(postId, authorId));
+        PostCommentResponse response = PostCommentResponse.from(postCommentRepository.save(saved));
+
+        outboxWriter.savePostCommentCreatedEvent(post, authorId);
+        return response;
     }
 
     /**
