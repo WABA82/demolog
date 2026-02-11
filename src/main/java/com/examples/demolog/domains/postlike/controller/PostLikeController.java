@@ -27,7 +27,6 @@ public class PostLikeController {
      * 게시물에 좋아요 추가
      */
     @PostMapping
-    @Idempotent
     public ResponseEntity<ApiResponse<PostLikeResponse>> likePost(
             @PathVariable UUID postId,
             @AuthenticationPrincipal CustomUserDetails userDetails

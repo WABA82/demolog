@@ -1,22 +1,27 @@
 package com.examples.demolog.domains.postlike.service;
 
+import com.examples.demolog.domains.post.model.Post;
 import com.examples.demolog.domains.post.repository.PostRepository;
 import com.examples.demolog.domains.postlike.dto.response.PostLikeResponse;
+import com.examples.demolog.domains.postlike.event.PostLikeOutboxWriter;
 import com.examples.demolog.domains.postlike.exception.PostLikeErrorCode;
 import com.examples.demolog.domains.postlike.exception.PostLikeException;
 import com.examples.demolog.domains.postlike.model.PostLike;
 import com.examples.demolog.domains.postlike.repository.PostLikeRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -25,28 +30,34 @@ public class PostLikeApplicationService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
 
+    private final PostLikeOutboxWriter outboxWriter;
+
     /**
      * 게시물에 좋아요 추가 (멱등성 보장)
      */
     @Transactional
     public PostLikeResponse likePost(UUID postId, UUID userId) {
-        // 게시글 존재 여부 확인
-        if (!postRepository.existsById(postId)) {
-            throw new PostLikeException(PostLikeErrorCode.POST_NOT_FOUND);
-        }
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostLikeException(PostLikeErrorCode.POST_NOT_FOUND));
 
         // 이미 좋아요한 경우 기존 데이터 반환 (멱등성)
         return postLikeRepository.findByPostIdAndUserId(postId, userId)
                 .map(PostLikeResponse::from)
                 .orElseGet(() -> {
                     try {
-                        PostLike postLike = PostLike.create(postId, userId);
-                        return PostLikeResponse.from(postLikeRepository.save(postLike));
+                        PostLike saved = postLikeRepository.save(PostLike.create(postId, userId));
+                        PostLikeResponse response = PostLikeResponse.from(saved);
+                        outboxWriter.savePostLikedEvent(post, userId);
+                        return response;
                     } catch (DataIntegrityViolationException e) {
                         // 동시성으로 인한 중복 생성 시 기존 데이터 반환
-                        PostLike existing = postLikeRepository.findByPostIdAndUserId(postId, userId)
-                                .orElseThrow();
+                        Optional<PostLike> optPostLike = postLikeRepository.findByPostIdAndUserId(postId, userId);
+                        if (optPostLike.isPresent()) {
+                            PostLike existing = optPostLike.get();
                         return PostLikeResponse.from(existing);
+                        }
+                        // 해당 문제가 아니면 throw
+                        throw e;
                     }
                 });
     }
@@ -56,13 +67,12 @@ public class PostLikeApplicationService {
      */
     @Transactional
     public void unlikePost(UUID postId, UUID userId) {
-        // 게시글 존재 여부 확인
-        if (!postRepository.existsById(postId)) {
-            throw new PostLikeException(PostLikeErrorCode.POST_NOT_FOUND);
-        }
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostLikeException(PostLikeErrorCode.POST_NOT_FOUND));
 
         // deleteByPostIdAndUserId는 존재하지 않아도 예외 발생 없음 (멱등성)
         postLikeRepository.deleteByPostIdAndUserId(postId, userId);
+        outboxWriter.savePostUnlikedEvent(post, userId);
     }
 
     /**
@@ -102,4 +112,5 @@ public class PostLikeApplicationService {
         return postLikeRepository.findByPostId(postId, pageableWithSort)
                 .map(PostLikeResponse::from);
     }
+
 }

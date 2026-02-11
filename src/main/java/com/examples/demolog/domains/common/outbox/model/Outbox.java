@@ -22,6 +22,10 @@ public class Outbox {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
+    // Kafka 토픽
+    @Column(nullable = false, length = 100)
+    private String topic;
+
     // 집계 타입 (예: "PostLike", "Post")
     @Column(nullable = false, length = 50)
     private String aggregateType;
@@ -33,10 +37,6 @@ public class Outbox {
     // 이벤트 타입 (예: "POST_LIKED", "POST_COMMENTED")
     @Column(nullable = false, length = 50)
     private String eventType;
-
-    // Kafka 토픽
-    @Column(nullable = false, length = 100)
-    private String topic;
 
     // 이벤트 페이로드 (JSON)
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -57,8 +57,12 @@ public class Outbox {
     /**
      * 생성 메서드
      */
-    public static Outbox create(String aggregateType, UUID aggregateId,
-                                String eventType, String topic, String payload) {
+    public static Outbox create(String topic,
+                                String aggregateType,
+                                UUID aggregateId,
+                                String eventType,
+                                String payload
+    ) {
         return Outbox.builder()
                 .aggregateType(aggregateType)
                 .aggregateId(aggregateId)
