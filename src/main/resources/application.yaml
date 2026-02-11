@@ -54,8 +54,8 @@ spring:
 
     consumer:
       group-id: demolog-group
-      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
-      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       enable-auto-commit: false # 메시지 처리 성공 후 직접 커밋 (권장)
       auto-offset-reset: earliest
 
