@@ -307,6 +307,7 @@ GET    /api/auth/me              - 현재 사용자 정보
 ```
 POST   /api/posts                - 게시물 생성 (멱등성 적용)
 GET    /api/posts                - 게시물 목록 조회 (페이징)
+GET    /api/posts/feed           - 인기 게시물 피드 조회 (좋아요 수 기반 정렬)
 GET    /api/posts/{postId}       - 단일 게시물 조회
 PUT    /api/posts/{postId}       - 게시물 수정
 DELETE /api/posts/{postId}       - 게시물 삭제
