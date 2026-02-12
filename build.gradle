@@ -26,6 +26,7 @@ repositories {
 
 ext {
     querydslVersion = "6.12"
+    generatedSourcesDir = "${buildDir}/generated/sources/annotationProcessor/java/main"
 }
 
 dependencies {

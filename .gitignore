@@ -26,6 +26,7 @@ out/
 .factorypath
 .recommenders/
 .metadata/
+bin/
 
 ########################################
 # VS Code (겸용 개발 시)
