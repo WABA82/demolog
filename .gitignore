@@ -109,3 +109,8 @@ docker-compose.override.yml
 .claude/
 .claude.json
 *.claude.json
+
+########################################
+# Oh My Claude Code (Claude Code Plugin)
+########################################
+.omc/

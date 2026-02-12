@@ -3,6 +3,7 @@ package com.examples.demolog.domains.post.controller;
 import com.examples.demolog.domains.common.idempotency.annotation.Idempotent;
 import com.examples.demolog.domains.post.dto.request.CreatePostRequest;
 import com.examples.demolog.domains.post.dto.request.UpdatePostRequest;
+import com.examples.demolog.domains.post.dto.response.PostFeedResponse;
 import com.examples.demolog.domains.post.dto.response.PostResponse;
 import com.examples.demolog.domains.post.service.PostApplicationService;
 import com.examples.demolog.global.response.ApiResponse;
@@ -60,6 +61,17 @@ public class PostController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<PostResponse> response = postApplicationService.getPosts(pageable);
+        return ApiResponse.ok(response);
+    }
+
+    /**
+     * 인기 게시물 피드 조회 (좋아요 수 기반 정렬)
+     */
+    @GetMapping("/feed")
+    public ResponseEntity<ApiResponse<Page<PostFeedResponse>>> getFeedPosts(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<PostFeedResponse> response = postApplicationService.getFeedPosts(pageable);
         return ApiResponse.ok(response);
     }
 
