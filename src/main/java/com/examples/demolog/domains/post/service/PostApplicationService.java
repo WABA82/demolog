@@ -2,6 +2,7 @@ package com.examples.demolog.domains.post.service;
 
 import com.examples.demolog.domains.post.dto.request.CreatePostRequest;
 import com.examples.demolog.domains.post.dto.request.UpdatePostRequest;
+import com.examples.demolog.domains.post.dto.response.PostFeedResponse;
 import com.examples.demolog.domains.post.dto.response.PostResponse;
 import com.examples.demolog.domains.post.exception.PostErrorCode;
 import com.examples.demolog.domains.post.exception.PostException;
@@ -47,6 +48,11 @@ public class PostApplicationService {
         );
         return postRepository.findAll(pageableWithSort)
                 .map(PostResponse::from);
+    }
+
+    public Page<PostFeedResponse> getFeedPosts(Pageable pageable) {
+        Pageable normalizedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return postRepository.findFeedOrderByLikeCount(normalizedPageable);
     }
 
     @Transactional
