@@ -7,12 +7,12 @@ import com.examples.demolog.domains.post.dto.response.PostFeedResponse;
 import com.examples.demolog.domains.post.dto.response.PostResponse;
 import com.examples.demolog.domains.post.service.PostApplicationService;
 import com.examples.demolog.global.response.ApiResponse;
+import com.examples.demolog.global.response.CursorPageResponse;
 import com.examples.demolog.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,13 +54,14 @@ public class PostController {
     }
 
     /**
-     * 게시물 목록 조회 (페이징)
+     * 게시물 목록 조회 (커서 기반 페이지네이션)
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostResponse>>> getPosts(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    public ResponseEntity<ApiResponse<CursorPageResponse<PostResponse>>> getPosts(
+            @RequestParam(required = false) UUID cursor,
+            @RequestParam(defaultValue = "20") int size
     ) {
-        Page<PostResponse> response = postApplicationService.getPosts(pageable);
+        CursorPageResponse<PostResponse> response = postApplicationService.getPostsByCursor(cursor, size);
         return ApiResponse.ok(response);
     }
 

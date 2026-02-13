@@ -10,14 +10,12 @@ import com.examples.demolog.domains.postcomment.exception.PostCommentErrorCode;
 import com.examples.demolog.domains.postcomment.exception.PostCommentException;
 import com.examples.demolog.domains.postcomment.model.PostComment;
 import com.examples.demolog.domains.postcomment.repository.PostCommentRepository;
+import com.examples.demolog.global.response.CursorPageResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -51,22 +49,17 @@ public class PostCommentApplicationService {
     }
 
     /**
-     * 댓글 목록 조회
+     * 댓글 목록 조회 (커서 기반 페이지네이션)
      */
-    public Page<PostCommentResponse> getPostComments(UUID postId, Pageable pageable) {
-        Pageable pageableWithSort = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSortOr(Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-
+    public CursorPageResponse<PostCommentResponse> getPostCommentsByCursor(UUID postId, UUID cursor, int size) {
         // 게시글 존재 여부 확인
-        if (postRepository.existsById(postId)) {
+        if (!postRepository.existsById(postId)) {
             throw new PostCommentException(PostCommentErrorCode.POST_NOT_FOUND);
         }
 
-        return postCommentRepository.findAll(pageableWithSort)
-                .map(PostCommentResponse::from);
+        List<PostCommentResponse> comments = postCommentRepository.findAllByPostIdAndCursor(postId, cursor, size);
+        UUID nextCursor = comments.size() > size ? comments.get(size - 1).id() : null;
+        return CursorPageResponse.of(comments, size, nextCursor);
     }
 
     /**

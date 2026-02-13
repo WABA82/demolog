@@ -10,14 +10,15 @@ import com.examples.demolog.domains.post.model.Post;
 import com.examples.demolog.domains.post.repository.PostRepository;
 import com.examples.demolog.domains.postrevision.model.PostRevision;
 import com.examples.demolog.domains.postrevision.repository.PostRevisionRepository;
+import com.examples.demolog.global.response.CursorPageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,14 +41,10 @@ public class PostApplicationService {
         return PostResponse.from(post);
     }
 
-    public Page<PostResponse> getPosts(Pageable pageable) {
-        Pageable pageableWithSort = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                pageable.getSortOr(Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-        return postRepository.findAll(pageableWithSort)
-                .map(PostResponse::from);
+    public CursorPageResponse<PostResponse> getPostsByCursor(UUID cursor, int size) {
+        List<PostResponse> posts = postRepository.findAllByCursor(cursor, size);
+        UUID nextCursor = posts.size() > size ? posts.get(size - 1).id() : null;
+        return CursorPageResponse.of(posts, size, nextCursor);
     }
 
     public Page<PostFeedResponse> getFeedPosts(Pageable pageable) {

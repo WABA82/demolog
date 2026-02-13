@@ -1,9 +1,11 @@
 package com.examples.demolog.domains.post.repository;
 
 import com.examples.demolog.domains.post.dto.response.PostFeedResponse;
+import com.examples.demolog.domains.post.dto.response.PostResponse;
 import com.examples.demolog.domains.post.model.QPost;
 import com.examples.demolog.domains.postlike.model.QPostLike;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -45,5 +48,32 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
 
         JPAQuery<Long> countQuery = queryFactory.select(post.count()).from(post);
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    @Override
+    public List<PostResponse> findAllByCursor(UUID cursor, int size) {
+        QPost post = QPost.post;
+
+        return queryFactory
+                .select(Projections.constructor(PostResponse.class,
+                        post.id,
+                        post.title,
+                        post.content,
+                        post.authorId,
+                        post.createdAt,
+                        post.updatedAt
+                ))
+                .from(post)
+                .where(cursorCondition(post, cursor))
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .limit(1 + size)
+                .fetch();
+    }
+
+    private BooleanExpression cursorCondition(QPost post, UUID cursor) {
+        if (cursor == null) {
+            return null;
+        }
+        return post.id.lt(cursor);
     }
 }
