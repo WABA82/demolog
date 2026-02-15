@@ -12,4 +12,6 @@ public interface PostRepositoryCustom {
     Page<PostFeedResponse> findFeedOrderByLikeCount(Pageable pageable);
 
     List<PostResponse> findAllByCursor(UUID cursor, int size);
+
+    Page<PostResponse> findAllByOffset(Pageable pageable);
 }

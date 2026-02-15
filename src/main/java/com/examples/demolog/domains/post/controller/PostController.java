@@ -66,6 +66,17 @@ public class PostController {
     }
 
     /**
+     * 게시물 목록 조회 (오프셋 기반 페이지네이션)
+     */
+    @GetMapping("/offset")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByOffset(
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<PostResponse> response = postApplicationService.getPostsByOffset(pageable);
+        return ApiResponse.ok(response);
+    }
+
+    /**
      * 인기 게시물 피드 조회 (좋아요 수 기반 정렬)
      */
     @GetMapping("/feed")

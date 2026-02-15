@@ -47,6 +47,11 @@ public class PostApplicationService {
         return CursorPageResponse.of(posts, size, nextCursor);
     }
 
+    public Page<PostResponse> getPostsByOffset(Pageable pageable) {
+        Pageable normalizedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return postRepository.findAllByOffset(normalizedPageable);
+    }
+
     public Page<PostFeedResponse> getFeedPosts(Pageable pageable) {
         Pageable normalizedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return postRepository.findFeedOrderByLikeCount(normalizedPageable);

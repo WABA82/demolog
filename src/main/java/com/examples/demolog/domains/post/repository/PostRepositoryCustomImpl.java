@@ -70,6 +70,29 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public Page<PostResponse> findAllByOffset(Pageable pageable) {
+        QPost post = QPost.post;
+
+        List<PostResponse> content = queryFactory
+                .select(Projections.constructor(PostResponse.class,
+                        post.id,
+                        post.title,
+                        post.content,
+                        post.authorId,
+                        post.createdAt,
+                        post.updatedAt
+                ))
+                .from(post)
+                .orderBy(post.createdAt.desc(), post.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory.select(post.count()).from(post);
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
     private BooleanExpression cursorCondition(QPost post, UUID cursor) {
         if (cursor == null) {
             return null;
